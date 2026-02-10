@@ -21,5 +21,6 @@ jobs:
       - name: Go Test
         run: go test ./...
   style:
+    steps:
       - name: Style
         uses: test -z $(go fmt ./...)
