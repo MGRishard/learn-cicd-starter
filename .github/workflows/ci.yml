@@ -5,10 +5,10 @@ on:
     branches: [main]
 
 jobs:
+  # First Job: Runs unit tests
   tests:
     name: Tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -20,7 +20,9 @@ jobs:
 
       - name: Go Test
         run: go test ./...
-  test1:
+
+  # Second Job: Runs in parallel to check formatting
+  style:
     name: Style
     runs-on: ubuntu-latest
     steps:
@@ -31,5 +33,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.25.1"
+
       - name: Go Format Test
+        # The double quotes around $(...) are the secret sauce 
+        # that prevents "too many arguments" errors.
         run: test -z "$(go fmt ./...)"
