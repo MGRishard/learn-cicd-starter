@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"io"
+	"string"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +18,11 @@ import (
 
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
+// Fix G706: Sanitize the port string to remove potential line breaks
+cleanPort := strings.ReplaceAll(strings.ReplaceAll(port, "\n", ""), "\r", "")
 
+log.Printf("Serving on port: %s\n", cleanPort)
+log.Fatal(srv.ListenAndServe())
 type apiConfig struct {
 	DB *database.Queries
 }
