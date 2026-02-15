@@ -11,6 +11,8 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     steps:
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - name: Check out code
         uses: actions/checkout@v4
 
@@ -21,7 +23,8 @@ jobs:
 
       - name: Go Test
         run: go test ./...
-
+      - name: GoSec Run
+        run: gosec ./...
   # Second Job: Runs in parallel to check formatting
   style:
     name: Style
