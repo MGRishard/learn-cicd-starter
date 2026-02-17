@@ -29,11 +29,10 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 		w.WriteHeader(500)
 		return
 	}
-// 1. Fix G705 (XSS): Explicitly set Content-Type so the browser 
+	// 1. Fix G705 (XSS): Explicitly set Content-Type so the browser
 	// doesn't try to "guess" if the data is executable HTML.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-
 	// 2. Fix G104 (Unhandled Error): Capture the error return.
 	// Also remove the duplicate w.Write(dat) line if you have two.
 	_, err = w.Write(dat)
