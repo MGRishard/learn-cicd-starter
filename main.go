@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,22 +27,32 @@ type apiConfig struct {
 var staticFiles embed.FS
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
+	// Load env (non-fatal)
+	if err := godotenv.Load(".env"); err != nil {
 		log.Printf("warning: assuming default configuration. .env unreadable: %v", err)
 	}
 
+	// Read and validate PORT
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("PORT environment variable is not set")
 	}
-	// Fix G706: sanitize port string (remove line breaks / whitespace)
+
+	// Trim whitespace and remove CR/LF (defense-in-depth)
+	port = strings.TrimSpace(port)
 	port = strings.ReplaceAll(port, "\n", "")
 	port = strings.ReplaceAll(port, "\r", "")
-	port = strings.TrimSpace(port)
+
+	p, err := strconv.Atoi(port)
+	if err != nil || p < 1 || p > 65535 {
+		// Avoid echoing tainted input into logs (fixes G706)
+		log.Fatal("Invalid PORT value")
+	}
+	port = strconv.Itoa(p) // normalized
 
 	apiCfg := apiConfig{}
 
+	// Optional DB setup
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Println("DATABASE_URL environment variable is not set")
@@ -67,6 +78,7 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	// Serve static index
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		f, err := staticFiles.Open("static/index.html")
 		if err != nil {
@@ -74,6 +86,7 @@ func main() {
 			return
 		}
 		defer f.Close()
+
 		if _, err := io.Copy(w, f); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -89,7 +102,6 @@ func main() {
 	}
 
 	v1Router.Get("/healthz", handlerReadiness)
-
 	router.Mount("/v1", v1Router)
 
 	srv := &http.Server{
@@ -98,6 +110,7 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	log.Printf("Serving on port: %s\n", port)
+	// Avoid logging tainted values (fixes G706)
+	log.Print("Server starting")
 	log.Fatal(srv.ListenAndServe())
 }
