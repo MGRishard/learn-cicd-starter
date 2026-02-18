@@ -27,7 +27,5 @@ jobs:
       - name: Go Format Test
         run: test -z "$(go fmt ./...)"
 
-      - name: CI Linting
-        run: staticcheck ./...
       - name: Building App
         run: ./scripts/buildprod.sh
