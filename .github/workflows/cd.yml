@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+jobs:
+  # First Job: Runs unit tests
+  tests:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+
+      - name: Go Test
+        run: go test ./...
+      - name: GoSec Run
+        run: gosec ./...
+
+      - name: Go Format Test
+        run: test -z "$(go fmt ./...)"
+
+      - name: CI Linting
+        run: staticcheck ./...
+      - name: Building App
+        run: ./scripts/buildprod.sh
